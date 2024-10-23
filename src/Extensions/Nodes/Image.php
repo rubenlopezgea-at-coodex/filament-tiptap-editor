@@ -35,6 +35,18 @@ class Image extends BaseImage
                         : null;
                 },
             ],
+            'srcset' => [
+                'default' => null,
+            ],
+            'sizes' => [
+                'default' => null,
+            ],
+            'loading' => [
+                'default' => null,
+            ],
+            'onload' => [
+                'default' => null,
+            ],
         ];
     }
 }
