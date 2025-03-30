@@ -80,6 +80,7 @@ class TiptapConverter
             new Nodes\TiptapBlock(['blocks' => $this->blocks]),
             new Nodes\Hurdle,
             new Nodes\Iframe,
+            new Nodes\Mention,
             new Table,
             new TableHeader,
             new TableRow,
@@ -88,7 +89,9 @@ class TiptapConverter
             new Underline,
             new Superscript,
             new Subscript,
-            new Marks\Link,
+            new Marks\Link([
+                'protocols' => config('filament-tiptap-editor.link_protocols', []),
+            ]),
             new Marks\Small,
             ...$customExtensions,
         ];
@@ -154,6 +157,8 @@ class TiptapConverter
             $this->parseMergeTags($editor);
         }
 
+        $this->parseMentionItems($editor);
+
         return $editor->getText();
     }
 
@@ -168,6 +173,10 @@ class TiptapConverter
         }
 
         $headings = $this->parseTocHeadings($content['content'], $maxDepth);
+
+        if (empty($headings)) {
+            return $array ? [] : '';
+        }
 
         return $array ?
             $this->generateTOCArray($headings) :
@@ -188,7 +197,7 @@ class TiptapConverter
             if (! property_exists($node->attrs, 'id') || $node->attrs->id === null) {
                 $node->attrs->id = str(collect($node->content)->map(function ($node) {
                     return $node?->text ?? null;
-                })->implode(' '))->kebab()->toString();
+                })->implode(' '))->slug()->toString();
             }
 
             array_unshift($node->content, (object) [
@@ -220,7 +229,7 @@ class TiptapConverter
                     })->implode(' ');
 
                     if (! isset($node['attrs']['id'])) {
-                        $node['attrs']['id'] = str($text)->kebab()->toString();
+                        $node['attrs']['id'] = str($text)->slug()->toString();
                     }
 
                     $headings[] = [
@@ -252,6 +261,24 @@ class TiptapConverter
                     ],
                 ];
             }
+        });
+
+        return $editor;
+    }
+
+    public function parseMentionItems(Editor $editor): Editor
+    {
+        $editor->descendants(function (&$node) {
+            if ($node->type !== 'mention') {
+                return;
+            }
+
+            $node->content = [
+                (object) [
+                    'type' => 'text',
+                    'text' => $node->attrs->label ?? $node->attrs->id,
+                ],
+            ];
         });
 
         return $editor;

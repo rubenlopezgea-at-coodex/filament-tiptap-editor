@@ -8,6 +8,18 @@
     $mergeTags = $getMergeTags();
     $shouldSupportBlocks = $shouldSupportBlocks();
     $shouldShowMergeTagsInBlocksPanel = $shouldShowMergeTagsInBlocksPanel();
+    $customDocument = $getCustomDocument();
+    $nodePlaceholders = $getNodePlaceholders();
+    $showOnlyCurrentPlaceholder = $getShowOnlyCurrentPlaceholder();
+    // Mentions
+    $mentionItems = $getMentionItems();
+    $emptyMentionItemsMessage = $getEmptyMentionItemsMessage();
+    $mentionItemsPlaceholder = $getMentionItemsPlaceholder();
+    $getMentionItemsUsingEnabled = $getMentionItemsUsingEnabled();
+    $maxMentionItems = $getMaxMentionItems();
+    $mentionTrigger = $getMentionTrigger();
+    $mentionDebounce = $getMentionDebounce();
+    $mentionSearchStrategy = $getMentionSearchStrategy();
 @endphp
 
 <x-dynamic-component
@@ -29,20 +41,37 @@
             >
                 <div
                     wire:ignore
-                    x-ignore
-                    ax-load="visible"
-                    ax-load-src="{{ \Filament\Support\Facades\FilamentAsset::getAlpineComponentSrc('tiptap', 'awcodes/tiptap-editor') }}"
+                    x-load
+                    x-load-src="{{ \Filament\Support\Facades\FilamentAsset::getAlpineComponentSrc('tiptap', 'awcodes/tiptap-editor') }}"
                     class="relative z-0 tiptap-wrapper rounded-md bg-white dark:bg-gray-900 focus-within:ring focus-within:ring-primary-500 focus-within:z-10"
                     x-bind:class="{ 'tiptap-fullscreen': fullScreenMode }"
                     x-data="tiptap({
-                        state: $wire.{{ $applyStateBindingModifiers("entangle('{$statePath}')", isOptimisticallyLive: true) }},
+                        state: $wire.{{ $applyStateBindingModifiers("\$entangle('{$statePath}')", isOptimisticallyLive: true) }},
                         statePath: '{{ $statePath }}',
                         tools: @js($tools),
                         disabled: @js($isDisabled),
                         locale: '{{ app()->getLocale() }}',
+                        bubbleMenuTools: @js($bubbleMenuTools),
                         floatingMenuTools: @js($floatingMenuTools),
                         placeholder: @js($getPlaceholder()),
                         mergeTags: @js($mergeTags),
+                        customDocument: @js($customDocument),
+                        nodePlaceholders: @js($nodePlaceholders),
+                        showOnlyCurrentPlaceholder: @js($showOnlyCurrentPlaceholder),
+                        debounce: @js($getLiveDebounce()),
+                        mentionItems: @js($mentionItems),
+                        emptyMentionItemsMessage: @js($emptyMentionItemsMessage),
+                        mentionItemsPlaceholder: @js($mentionItemsPlaceholder),
+                        maxMentionItems: @js($maxMentionItems),
+                        mentionTrigger: @js($mentionTrigger),
+                        livewireId: @js($this->getId()),
+                        getMentionItemsUsingEnabled: @js($getMentionItemsUsingEnabled),
+                        getSearchResultsUsing: async (search) => {
+                          return await $wire.getMentionsItems(@js($statePath), search)
+                        },
+                        mentionDebounce: @js($mentionDebounce),
+                        mentionSearchStrategy: @js($mentionSearchStrategy),
+                        linkProtocols: @js(config('filament-tiptap-editor.link_protocols')),
                     })"
                     x-init="$nextTick(() => { init() })"
                     x-on:click.away="blur()"
@@ -59,8 +88,7 @@
                     x-on:insert-block.window="insertBlock($event)"
                     x-on:update-block.window="updateBlock($event)"
                     x-on:open-block-settings.window="openBlockSettings($event)"
-                    x-on:delete-block.window="deleteBlock()"
-                    x-on:open-modal.window="handleOpenModal()"
+                    x-on:delete-block.window="deleteBlock($event)"
                     x-on:locale-change.window="updateLocale($event)"
                     x-trap.noscroll="fullScreenMode"
                 >
@@ -79,7 +107,9 @@
                                             @elseif ($tool === '-')
                                                 <div class="border-t border-gray-950/10 dark:border-white/20 w-full"></div>
                                             @elseif (is_array($tool))
+                                                @if(array_key_exists('button', $tool) && !is_null($tool['button']))
                                                 <x-dynamic-component component="{{ $tool['button'] }}" :state-path="$statePath" />
+                                                @endif
                                             @elseif ($tool === 'blocks')
                                                 @if ($blocks && $shouldSupportBlocks)
                                                     <x-filament-tiptap-editor::tools.blocks :blocks="$blocks" :state-path="$statePath" />
@@ -101,7 +131,7 @@
                         </template>
                     @endif
 
-                    @if (! $isBubbleMenusDisabled())
+                    @if (! $isDisabled && ! $isBubbleMenusDisabled())
                     <template x-if="editor()">
                         <div>
                             <div x-ref="bubbleMenu" class="tiptap-editor-bubble-menu-wrapper">

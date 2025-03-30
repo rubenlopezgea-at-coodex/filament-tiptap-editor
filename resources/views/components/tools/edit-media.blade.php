@@ -23,6 +23,9 @@
                 width: media.width || '',
                 height: media.height || '',
                 lazy: media.lazy || false,
+                media: media.media || '',
+                srcset: media.srcset || '',
+                sizes: media.sizes || '',
             };
 
             {{ $action }}
