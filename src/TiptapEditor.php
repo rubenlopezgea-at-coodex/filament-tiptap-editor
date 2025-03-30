@@ -3,13 +3,11 @@
 namespace FilamentTiptapEditor;
 
 use Closure;
-use Throwable;
-use JsonException;
-use Livewire\Component;
-use Illuminate\Support\Js;
-use Illuminate\Support\Str;
-use Filament\Forms\Components\Field;
 use Filament\Forms\Components\Actions\Action;
+use Filament\Forms\Components\Concerns\HasExtraInputAttributes;
+use Filament\Forms\Components\Concerns\HasPlaceholder;
+use Filament\Forms\Components\Field;
+use Filament\Support\Concerns\HasExtraAlpineAttributes;
 use FilamentTiptapEditor\Actions\IframeAction;
 use FilamentTiptapEditor\Actions\SourceAction;
 use FilamentTiptapEditor\Concerns\CanStoreOutput;
@@ -17,9 +15,11 @@ use FilamentTiptapEditor\Concerns\HasCustomActions;
 use FilamentTiptapEditor\Concerns\HasMentions;
 use FilamentTiptapEditor\Concerns\InteractsWithMedia;
 use FilamentTiptapEditor\Concerns\InteractsWithMenus;
-use Filament\Forms\Components\Concerns\HasPlaceholder;
-
-use Filament\Forms\Components\Concerns\HasExtraInputAttributes;
+use Illuminate\Support\Js;
+use Illuminate\Support\Str;
+use JsonException;
+use Livewire\Component;
+use Throwable;
 
 class TiptapEditor extends Field
 {
